@@ -5,7 +5,6 @@
   <title>$LATINA Filter</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
   <!-- interact.js for drag/resize/rotate -->
   <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
   <!-- face-api.js -->
@@ -19,37 +18,46 @@
   <style>
     /* ─── Variables ─── */
     :root{
-    --bg:#fff9f5;--peach:#ffc8a2;--peach-dark:#e5a77c;--ink:#6d4c41;
-    --light-peach:#ffe5d4;--shadow:#d7ccc8;--corner:8px;--white:#ffffff;
-    --danger:#e57373;--danger-dark:#c62828;
+      --bg:#fff9f5;--peach:#ffc8a2;--peach-dark:#e5a77c;--ink:#6d4c41;
+      --light-peach:#ffe5d4;--shadow:#d7ccc8;--corner:8px;--white:#ffffff;
+      --danger:#e57373;--danger-dark:#c62828;
+      --latina-primary:#F7B2C5;
+
+      /* Stage height controls how trees/water/speakers scale with land */
+      --stage-h: clamp(260px, 30vh, 420px);
     }
 
     /* ─── Layout ─── */
     html,body{height:100%;margin:0}
     body{
-    font-family:'Gaegu',cursive;background:var(--bg) url('./assets/wallpaper.png') repeat fixed;
-    color:var(--ink);display:flex;flex-direction:column;align-items:center;
-    padding:40px 20px;gap:20px;
+      font-family:'Gaegu',cursive;
+      color:var(--ink);
+      display:flex;flex-direction:column;align-items:center;
+      padding:40px 20px;gap:20px;
+      background:none;
+      position:relative; z-index:0;
     }
-    h2{margin:0;font-size:42px;font-weight:700;letter-spacing:1px;text-shadow:1px 1px var(--white);color:var(--peach-dark);}
+
+    h2{margin:0;font-size:42px;font-weight:700;letter-spacing:1px;text-shadow:1px 1px var(--white);color:var(--peach-dark);position:relative;z-index:10;}
 
     /* ─── Window Frame ─── */
     .window{
-    background:var(--white);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);
-    display:inline-block;border-radius:var(--corner);width:100%;max-width:600px;box-sizing:border-box;
+      background:var(--white);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);
+      display:inline-block;border-radius:var(--corner);width:100%;max-width:600px;box-sizing:border-box;
+      position:relative;z-index:10;
     }
     .titlebar{
-    height:30px;background:var(--peach);display:flex;align-items:center;justify-content:flex-start;
-    padding:0 10px;border-bottom:2px solid var(--ink);font-size:20px;font-weight:700;border-radius:6px 6px 0 0;
+      height:30px;background:var(--peach);display:flex;align-items:center;justify-content:flex-start;
+      padding:0 10px;border-bottom:2px solid var(--ink);font-size:20px;font-weight:700;border-radius:6px 6px 0 0;
     }
     .titlebar::before{content:'🍑';margin-right:8px;}
 
     /* ─── Content Area ─── */
     .content{padding:20px;text-align:center;}
     #image-display{
-    position:relative;display:inline-block;max-width:100%;background:var(--light-peach);
-    border:2px dashed var(--peach-dark);border-radius:var(--corner);margin-top:20px;line-height:0;
-    touch-action:none;
+      position:relative;display:inline-block;max-width:100%;background:var(--light-peach);
+      border:2px dashed var(--peach-dark);border-radius:var(--corner);margin-top:20px;line-height:0;
+      touch-action:none;
     }
     #image-display canvas{display:block;max-width:100%;height:auto;}
 
@@ -59,26 +67,19 @@
 
     /* rotate knob */
     .rotate-handle{
-    position:absolute;left:50%;bottom:-32px;transform:translateX(-50%);
-    width:26px;height:26px;border:2px solid var(--ink);border-radius:50%;background:#fff;
-    display:none;align-items:center;justify-content:center;
-    cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' stroke='%236d4c41' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M4.93 4.93a10 10 0 1 1-1.36 11.32'/><polyline points='4 4 4 10 10 10'/></svg>") 16 16,pointer;
+      position:absolute;left:50%;bottom:-32px;transform:translateX(-50%);
+      width:26px;height:26px;border:2px solid var(--ink);border-radius:50%;background:#fff;
+      display:none;align-items:center;justify-content:center;
+      cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' stroke='%236d4c41' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M4.93 4.93a10 10 0 1 1-1.36 11.32'/><polyline points='4 4 4 10 10 10'/></svg>") 16 16,pointer;
     }
     .rotate-handle::before{content:"↻";font-size:15px;color:var(--ink);}
     .accessory.selected .rotate-handle{display:flex}
 
     /* corner resize handles */
     .resize-handle {
-        position: absolute;
-        width: 14px;
-        height: 14px;
-        background: #fff;
-        border: 2px solid var(--ink);
-        border-radius: 3px;
-        z-index: 11;
-        pointer-events: all; /* Ensure handles receive mouse events */
+      position: absolute;width: 14px;height: 14px;background: #fff;border: 2px solid var(--ink);
+      border-radius: 3px;z-index: 11;pointer-events: all;
     }
-    
     .resize-handle.tl{top:-7px;left:-7px;cursor:nwse-resize;}
     .resize-handle.tr{top:-7px;right:-7px;cursor:nesw-resize;}
     .resize-handle.bl{bottom:-7px;left:-7px;cursor:nesw-resize;}
@@ -93,25 +94,25 @@
     .add-manual-btn:hover{background-color:var(--peach-dark);color:var(--white);}
     .icon-options{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
     .option-icon{
-    width:50px;height:50px;border:3px solid transparent;border-radius:var(--corner);padding:5px;cursor:pointer;background-color:var(--bg);
-    display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+      width:50px;height:50px;border:3px solid transparent;border-radius:var(--corner);padding:5px;cursor:pointer;background-color:var(--bg);
+      display:flex;align-items:center;justify-content:center;transition:all 0.2s;
     }
     .option-icon:hover{border-color:var(--peach);}
     .option-icon.selected{border-color:var(--peach-dark);background-color:var(--light-peach);}
-    .option-icon.selected:hover{border-color:var(--peach-dark);background-color:var(--light-peach);} /* keeps styling on hover */
+    .option-icon.selected:hover{border-color:var(--peach-dark);background-color:var(--light-peach);}
     .option-icon img{max-width:100%;max-height:100%;object-fit:contain;}
     .option-icon.none-icon{font-size:40px;font-weight:bold;line-height:50px;color:var(--shadow);}
 
     /* ─── Buttons ─── */
     .controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-top:20px;}
     button,input[type=file]{
-    font-family:inherit;font-size:18px;font-weight:700;background:var(--white);border:2px solid var(--ink);
-    padding:8px 16px;cursor:pointer;transition:all .2s;border-radius:6px;box-shadow:2px 2px 0 var(--shadow);
+      font-family:inherit;font-size:18px;font-weight:700;background:var(--white);border:2px solid var(--ink);
+      padding:8px 16px;cursor:pointer;transition:all .2s;border-radius:6px;box-shadow:2px 2px 0 var(--shadow);
     }
     button:hover,input[type=file]:hover{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--shadow);}
     button:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--shadow);}
     input[type=file]::file-selector-button{
-    font-family:inherit;font-weight:700;background:var(--peach);border:none;padding:4px 10px;border-radius:4px;border-right:2px solid var(--ink);margin-right:10px;cursor:pointer;
+      font-family:inherit;font-weight:700;background:var(--peach);border:none;padding:4px 10px;border-radius:4px;border-right:2px solid var(--ink);margin-right:10px;cursor:pointer;
     }
     #applyBtn{background:var(--peach-dark);color:var(--white);border-color:var(--ink);flex-grow:1;font-size:24px;padding:12px 20px;}
     #applyBtn:disabled{background:var(--shadow);color:#9e9e9e;cursor:not-allowed;transform:none;box-shadow:2px 2px 0 var(--shadow);}
@@ -124,16 +125,161 @@
     input[type="checkbox"]{accent-color:var(--peach-dark);width:18px;height:18px;}
 
     @media (max-width:640px){
-    body{padding:20px 10px;gap:15px;}
-    h2{text-align:center;font-size:32px;}
-    .options-grid{grid-template-columns:1fr;}
+      body{padding:20px 10px;gap:15px;}
+      h2{text-align:center;font-size:32px;}
+      .options-grid{grid-template-columns:1fr;}
     }
 
+    /*
+    ========================================
+    LATINA HERO BACKGROUND (STAGED + SCALING)
+    ========================================
+    */
+    .hero-bg{
+      position:fixed; inset:0;
+      overflow:hidden;
+      z-index:-10;
+      pointer-events:none;
+    }
+    .hero-gradient{
+      position:absolute; inset:0;
+      background:linear-gradient(to bottom, var(--latina-primary), #FC9DC1);
+      z-index:0;
+    }
+
+    /* Clouds + Fireworks (free-floating, not tied to stage) */
+    .cloud{
+      position:absolute; top:-6rem; height:20rem; width:auto; z-index:60; display:none;
+    }
+    .cloud-left{ left:0; }
+    .cloud-right{ right:0; }
+    @media (min-width:768px){
+      .cloud{ display:block; }
+    }
+    .firework{
+      position:absolute; z-index:60; width:clamp(8rem, 12vw, 14rem); height:auto;
+    }
+    .firework-1{ top:10rem; left:10rem; }
+    .firework-2{ top:10rem; right:20rem; }
+
+    /* STAGE: everything that must scale together with land sits here */
+    .stage{
+      position:fixed; left:0; right:0; bottom:0;
+      height:var(--stage-h);
+      z-index:20;
+      contain: layout paint;
+    }
+
+    .land-layer{ position:absolute; inset:0; z-index:30; }
+    .land-layer img{
+      position:absolute; left:0; bottom:0; width:100%; height:40%;
+      object-fit:cover;
+    }
+
+    .water-layer{ position:absolute; left:0; right:0; bottom:24%; height:44%; z-index:22; }
+    .water{
+      position:absolute; left:0; right:0; bottom:0;
+      width:100%; height:100%; object-fit:cover;
+      opacity:.98;
+    }
+    .water-form{
+      position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+      height:100%; width:auto; object-fit:contain;
+      z-index:23;
+    }
+
+    .tree{
+      position:absolute; bottom:22%; height:auto; z-index:26;
+    }
+    .tree-center{
+      height:80%; left:50%; transform:translateX(-58%); z-index:24;
+    }
+    .tree-left{
+      height:80%; left:6vw; z-index:26;
+    }
+    .tree-right{
+      height:80%; right:0; z-index:26;
+    }
+
+    .speakers{
+      position:absolute; bottom:30%;
+      width:clamp(8rem, 10vw, 11rem); height:auto; z-index:35;
+    }
+    .speakers-left{ left:min(15vw, 12rem); }
+    .speakers-right{ right:min(15vw, 12rem); }
+    .speakers .stack{ position:relative; width:100%; height:100%; }
+    .speakers .stack img{
+      position:absolute; width:100%; height:auto; filter:drop-shadow(0 2px 0 rgba(0,0,0,.2));
+    }
+    .speakers .stack img:nth-child(1){ transform:translate(-30%, 6%) scale(0.95); z-index:1; }
+    .speakers .stack img:nth-child(2){ transform:translate(0, -2%) scale(1.05);  z-index:2; }
+    .speakers .stack img:nth-child(3){ transform:translate(30%, 6%) scale(0.98);  z-index:1; }
+
+    @media (max-width:480px){
+      :root{ --stage-h: clamp(230px, 34vh, 420px); }
+      .speakers{ bottom:32%; }
+      .speakers-left{ left:2rem; }
+      .speakers-right{ right:2rem; }
+      .firework-1{ left:1.5rem; top:8rem; }
+      .firework-2{ right:2rem;  top:8rem; }
+    }
   </style>
 </head>
 <body>
 
-  <h2>$LATINA Peach Studio</h2>
+    <!-- Replaced H1 text title with image -->
+  <img src="./assets/title.png" alt="Latina Title" style="width: 500px; max-width:500px; height:auto; z-index:30; position:relative;">
+
+  <!-- ========= Layered Hero Background ========= -->
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-gradient"></div>
+
+    <!-- Clouds -->
+    <img class="cloud cloud-left"  src="./assets/cloud-left.svg"  alt="">
+    <img class="cloud cloud-right" src="./assets/cloud-right.svg" alt="">
+
+    <!-- Fireworks -->
+    <img class="firework firework-1" src="./assets/fireworks.svg" alt="">
+    <img class="firework firework-2" src="./assets/fireworks.svg" alt="">
+
+    <!-- Stage (everything here scales together with land) -->
+    <div class="stage">
+      <!-- Water -->
+      <div class="water-layer">
+        <img class="water"      src="./assets/water.svg"       alt="">
+        <img class="water-form" src="./assets/water-form.svg"  alt="">
+      </div>
+
+      <!-- Trees -->
+      <img class="tree tree-center" src="./assets/tree-center.svg" alt="">
+      <img class="tree tree-left"   src="./assets/tree-left.svg"   alt="">
+      <img class="tree tree-right"  src="./assets/tree-right.svg"  alt="">
+
+      <!-- Speakers -->
+      <div class="speakers speakers-left">
+        <div class="stack">
+          <img src="./assets/speaker.png" alt="">
+          <img src="./assets/speaker.png" alt="">
+          <img src="./assets/speaker.png" alt="">
+        </div>
+      </div>
+      <div class="speakers speakers-right">
+        <div class="stack">
+          <img src="./assets/speaker.png" alt="">
+          <img src="./assets/speaker.png" alt="">
+          <img src="./assets/speaker.png" alt="">
+        </div>
+      </div>
+
+      <!-- Land (anchor layer) -->
+      <div class="land-layer">
+        <img class="land" src="./assets/land.svg" alt="">
+      </div>
+    </div>
+  </div>
+  <!-- ======== /Layered Hero Background ======== -->
+
+  <!-- h2>$LATINA Peach Studio</h2 -->
 
   <div class="window">
     <div class="titlebar"><span>LATINA Image Editor</span></div>
@@ -141,24 +287,35 @@
       
       <div class="options-grid">
         <div class="option-group">
-          <div class="option-group-header"><h3>Hats</h3><div class="add-manual-btn" id="add-hat-manual" title="Add Selected Hat Manually">+</div></div>
+          <div class="option-group-header">
+            <h3>Hats</h3>
+            <div class="add-manual-btn" id="add-hat-manual" title="Add Selected Hat Manually">+</div>
+          </div>
           <div class="icon-options" id="hat-options">
-            <div class="option-icon none-icon selected" data-value="none">ø</div><div class="option-icon" data-value="beanie"><img src="./assets/beanie-nobg.png"></div><div class="option-icon" data-value="cap"><img src="./assets/cap-nobg.png"></div><div class="option-icon" data-value="sunhat"><img src="./assets/sunhat-nobg.png"></div>
+            <div class="option-icon none-icon selected" data-value="none">ø</div>
+            <div class="option-icon" data-value="beanie"><img src="./assets/beanie-nobg.png" alt=""></div>
+            <div class="option-icon" data-value="cap"><img src="./assets/cap-nobg.png" alt=""></div>
+            <div class="option-icon" data-value="sunhat"><img src="./assets/sunhat-nobg.png" alt=""></div>
           </div>
         </div>
+
         <div class="option-group">
-          <div class="option-group-header"><h3>Glasses</h3><div class="add-manual-btn" id="add-glasses-manual" title="Add Selected Glasses Manually">+</div></div>
-          <div class="icon-options" id="glasses-options">
-            <div class="option-icon none-icon selected" data-value="none">ø</div><div class="option-icon" data-value="sunglasses"><img src="./assets/sunglasses-nobg.png"></div>
+          <div class="option-group-header">
+            <h3>Glasses</h3>
+            <div class="add-manual-btn" id="add-glasses-manual" title="Add Selected Glasses Manually">+</div>
           </div>
-          <hr style="border: none; border-top: 2px dotted var(--peach); margin: 15px 0;">
+          <div class="icon-options" id="glasses-options">
+            <div class="option-icon none-icon selected" data-value="none">ø</div>
+            <div class="option-icon" data-value="sunglasses"><img src="./assets/sunglasses-nobg.png" alt=""></div>
+          </div>
+          <hr style="border:none;border-top:2px dotted var(--peach);margin:15px 0;">
           <label class="filter-option"><input type="checkbox" id="peach-filter"> Peach Filter</label>
         </div>
       </div>
       
       <div class="controls">
-          <input type="file" id="upload" accept="image/*">
-          <button id="applyBtn" disabled>✨ Apply Magic! ✨</button>
+        <input type="file" id="upload" accept="image/*">
+        <button id="applyBtn" disabled>✨ Apply Magic! ✨</button>
       </div>
       <p id="status">loading models, please wait...</p>
       
@@ -166,524 +323,532 @@
         <canvas id="canvas"></canvas>
       </div>
 
-       <div class="controls">
-          <label class="filter-option" style="margin-top:10px;">
-            <input type="checkbox" id="include-outside"> Include off-canvas props
-          </label>
-          <button id="downloadBtn" style="display: none;">Download</button>
-          <button id="resetBtn" style="display: none;">Reset</button>
-       </div>
+      <div class="controls">
+        <label class="filter-option" style="margin-top:10px;">
+          <input type="checkbox" id="include-outside"> Include off-canvas props
+        </label>
+        <button id="downloadBtn" style="display:none;">Download</button>
+        <button id="resetBtn" style="display:none;">Reset</button>
+      </div>
 
     </div>
-    </div>
+  </div>
+
 
     <script>
-/* ========== CONSTANTS & HELPERS ========== */
-const MODEL_URL = './model/';
+      /* ========== CONSTANTS & HELPERS ========== */
+      const MODEL_URL = './model/';
 
-/* ---- coordinate helpers ---- */
-let coordinateScale = 1;              // img-px / dom-px
-const dom2img = v => v * coordinateScale;
-const img2dom = v => v / coordinateScale;
+      /* ---- coordinate helpers ---- */
+      let coordinateScale = 1;              // img-px / dom-px
+      const dom2img = v => v * coordinateScale;
+      const img2dom = v => v / coordinateScale;
 
-/* ---- DOM refs ---- */
-const uploadInput   = document.getElementById('upload');
-const applyBtn      = document.getElementById('applyBtn');
-const downloadBtn   = document.getElementById('downloadBtn');
-const resetBtn      = document.getElementById('resetBtn');
-const canvas        = document.getElementById('canvas');
-const statusText    = document.getElementById('status');
-const imageDisplay  = document.getElementById('image-display');
-const peachFilter   = document.getElementById('peach-filter');
-const hatOptions    = document.getElementById('hat-options');
-const glassesOptions= document.getElementById('glasses-options');
-const addHatBtn     = document.getElementById('add-hat-manual');
-const addGlassesBtn = document.getElementById('add-glasses-manual');
+      /* ---- DOM refs ---- */
+      const uploadInput   = document.getElementById('upload');
+      const applyBtn      = document.getElementById('applyBtn');
+      const downloadBtn   = document.getElementById('downloadBtn');
+      const resetBtn      = document.getElementById('resetBtn');
+      const canvas        = document.getElementById('canvas');
+      const statusText    = document.getElementById('status');
+      const imageDisplay  = document.getElementById('image-display');
+      const peachFilter   = document.getElementById('peach-filter');
+      const hatOptions    = document.getElementById('hat-options');
+      const glassesOptions= document.getElementById('glasses-options');
+      const addHatBtn     = document.getElementById('add-hat-manual');
+      const addGlassesBtn = document.getElementById('add-glasses-manual');
 
-/* ---- Assets ---- */
-const ASSET_PATHS = {
-  beanie     : './assets/beanie-nobg.png',
-  cap        : './assets/cap-nobg.png',
-  sunhat     : './assets/sunhat-nobg.png',
-  sunglasses : './assets/sunglasses-nobg.png',
-  peach      : './assets/peach.png'
-};
-const loadedAssets = {};
+      /* ---- Assets ---- */
+      const ASSET_PATHS = {
+        beanie     : './assets/beanie-nobg.png',
+        cap        : './assets/cap-nobg.png',
+        sunhat     : './assets/sunhat-nobg.png',
+        sunglasses : './assets/sunglasses-nobg.png',
+        peach      : './assets/peach.png'
+      };
+      const loadedAssets = {};
 
-/* ---- Global state ---- */
-let originalImage = null;
-let selectedAccessory = null;
+      /* ---- Global state ---- */
+      let originalImage = null;
+      let selectedAccessory = null;
 
-/* ========== INITIALISATION ========== */
-(async function init () {
-  try {
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
-      ...Object.values(ASSET_PATHS).map(preloadImage)
-    ]);
-    statusText.textContent = 'Ready! Please upload an image.';
-    setupGlobalInteractions();
-  } catch (err) {
-    console.error(err);
-    statusText.textContent = 'Error loading. Please refresh.';
-  }
-})();
+      /* ========== INITIALISATION ========== */
+      (async function init () {
+        try {
+          await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+            ...Object.values(ASSET_PATHS).map(preloadImage)
+          ]);
+          statusText.textContent = 'Ready! Please upload an image.';
+          setupGlobalInteractions();
+        } catch (err) {
+          console.error(err);
+          statusText.textContent = 'Error loading. Please refresh.';
+        }
+      })();
 
-/* ========= NEW: adaptive thresholds for face detection ========= */
-const THRESHOLDS = [0.6, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05];
-async function detectFacesAdaptive (img) {
-  for (const th of THRESHOLDS) {
-    statusText.textContent = `Scanning (threshold ${th})…`;
-    const dets = await faceapi
-      .detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: th }))
-      .withFaceLandmarks(true);
-    if (dets.length) return dets;
-  }
-  return [];   // none found at any threshold
-}
-
-/* ========== COLOUR CONSTANTS ========== */
-const PEACH_BORDER_COLORS = ['#67767e', '#9bf9e4', '#9bf9e4', '#f1809c', '#f2aee1'];
-
-/* Draws a multi-tone border that never covers the photo itself */
-function drawPeachBorder(ctx, x, y, w, h, thickness = 14) {
-  ctx.save();
-  ctx.lineWidth = thickness;
-  const steps = PEACH_BORDER_COLORS.length - 1;
-
-  // ---- Top ----
-  let gTop = ctx.createLinearGradient(x, 0, x + w, 0);
-  PEACH_BORDER_COLORS.forEach((c, i) => gTop.addColorStop(i / steps, c));
-  ctx.strokeStyle = gTop;
-  ctx.beginPath();
-  ctx.moveTo(x, y + thickness / 2);
-  ctx.lineTo(x + w, y + thickness / 2);
-  ctx.stroke();
-
-  // ---- Right ----
-  let gRight = ctx.createLinearGradient(0, y, 0, y + h);
-  PEACH_BORDER_COLORS.forEach((c, i) => gRight.addColorStop(i / steps, c));
-  ctx.strokeStyle = gRight;
-  ctx.beginPath();
-  ctx.moveTo(x + w - thickness / 2, y);
-  ctx.lineTo(x + w - thickness / 2, y + h);
-  ctx.stroke();
-
-  // ---- Bottom ----
-  let gBot = ctx.createLinearGradient(x + w, 0, x, 0);
-  PEACH_BORDER_COLORS.forEach((c, i) => gBot.addColorStop(i / steps, c));
-  ctx.strokeStyle = gBot;
-  ctx.beginPath();
-  ctx.moveTo(x + w, y + h - thickness / 2);
-  ctx.lineTo(x, y + h - thickness / 2);
-  ctx.stroke();
-
-  // ---- Left ----
-  let gLeft = ctx.createLinearGradient(0, y + h, 0, y);
-  PEACH_BORDER_COLORS.forEach((c, i) => gLeft.addColorStop(i / steps, c));
-  ctx.strokeStyle = gLeft;
-  ctx.beginPath();
-  ctx.moveTo(x + thickness / 2, y + h);
-  ctx.lineTo(x + thickness / 2, y);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-/* ========== ASSET PRELOAD ========== */
-function preloadImage (url) {
-  return new Promise((res, rej) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      loadedAssets[
-        Object.keys(ASSET_PATHS).find(k => ASSET_PATHS[k] === url)
-      ] = img;
-      res();
-    };
-    img.onerror = rej;
-    img.src = url;
-  });
-}
-
-/* ========== UI WIRING ========== */
-uploadInput.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      originalImage = img;
-      handleReset();
-      applyBtn.disabled = false;
-      statusText.textContent = 'Image loaded! Click "Apply" or add items.';
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-applyBtn.addEventListener('click', applyEffects);
-downloadBtn.addEventListener('click', downloadImage);
-resetBtn.addEventListener('click', handleReset);
-addHatBtn.addEventListener('click', () => addAccessoryManually('hat'));
-addGlassesBtn.addEventListener('click', () => addAccessoryManually('glasses'));
-window.addEventListener('resize', updateAccessoryPositions);
-
-setupOptionPicker(hatOptions);
-setupOptionPicker(glassesOptions);
-
-imageDisplay.addEventListener('click', e => {
-  if (e.target.id === 'image-display' || e.target.id === 'canvas') {
-    selectAccessory(null);
-  }
-});
-
-/* ---- option-picker helper ---- */
-function setupOptionPicker (container) {
-  container.addEventListener('click', e => {
-    const target = e.target.closest('.option-icon');
-    if (!target) return;
-    container
-      .querySelectorAll('.option-icon')
-      .forEach(i => i.classList.remove('selected'));
-    target.classList.add('selected');
-  });
-}
-
-/* ========== APPLY AI / FILTER (now adaptive) ========== */
-async function applyEffects () {
-  if (!originalImage) return;
-  applyBtn.disabled = true;
-  clearAccessories();
-  statusText.textContent = 'Detecting face…';
-
-  displayImage(originalImage, peachFilter.checked);
-
-  const detections = await detectFacesAdaptive(originalImage);
-
-  if (!detections.length) {
-    statusText.textContent =
-      'No face detected at any sensitivity. Add items manually with "+".';
-  } else {
-    statusText.textContent = 'Face found! Placing accessories…';
-    const resized = faceapi.resizeResults(detections, {
-      width: canvas.width,
-      height: canvas.height
-    });
-    const hatSel =
-      hatOptions.querySelector('.selected').dataset.value;
-    const glassSel =
-      glassesOptions.querySelector('.selected').dataset.value;
-    if (hatSel !== 'none') addAccessory(hatSel, { landmarks: resized[0].landmarks });
-    if (glassSel !== 'none') addAccessory(glassSel, { landmarks: resized[0].landmarks });
-  }
-  applyBtn.disabled = false;
-  showActionButtons();
-}
-
-/* ========== CANVAS HELPERS ========== */
-function displayImage (img, applyFilter = false) {
-  const ctx = canvas.getContext('2d');
-  const containerW = imageDisplay.clientWidth || 600;
-  coordinateScale = img.width / containerW;
-  canvas.width = containerW;
-  canvas.height = img.height / coordinateScale;
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  if (applyFilter) applyPeachFilter(ctx, canvas.width, canvas.height, false);
-}
-
-function showActionButtons () {
-  downloadBtn.style.display = 'inline-block';
-  resetBtn.style.display = 'inline-block';
-}
-
-/* ========== ACCESSORY MANAGEMENT ========== */
-function addAccessoryManually (category) {
-  if (!originalImage) {
-    statusText.textContent = 'Please upload an image first!';
-    return;
-  }
-  const container = category === 'hat' ? hatOptions : glassesOptions;
-  const val = container.querySelector('.selected').dataset.value;
-  if (val !== 'none') {
-    addAccessory(val);
-    showActionButtons();
-  }
-}
-
-function addAccessory (type, { landmarks } = {}) {
-  const el = document.createElement('div');
-  el.className = 'accessory';
-  el.innerHTML = `
-    <img src="${ASSET_PATHS[type]}" style="width:100%;height:100%;pointer-events:none;user-select:none;">
-    <div class="rotate-handle" style="display:none"></div>
-    <div class="resize-handle tl" style="display:none"></div>
-    <div class="resize-handle tr" style="display:none"></div>
-    <div class="resize-handle bl" style="display:none"></div>
-    <div class="resize-handle br" style="display:none"></div>
-  `;
-
-  const imgAsset = loadedAssets[type];
-  let x, y, w, h;
-
-  if (landmarks) {
-    ({ x, y, width: w, height: h } = calculatePlacement(type, landmarks));
-    x = dom2img(x);
-    y = dom2img(y);
-    w = dom2img(w);
-    h = dom2img(h);
-  } else {
-    w = originalImage.width / 4;
-    h = (imgAsset.height / imgAsset.width) * w;
-    x = (originalImage.width - w) / 2;
-    y = (originalImage.height - h) / 2;
-  }
-
-  Object.assign(el.dataset, { x, y, w, h, rot: 0, asset: type });
-  updateElementStyle(el);
-  imageDisplay.appendChild(el);
-  makeAccessoryInteractive(el);
-  selectAccessory(el); // new accessory becomes selected
-}
-
-/* ---- placement maths ---- */
-function calculatePlacement (type, lm) {
-  if (type === 'sunglasses') {
-    const L = lm.getLeftEye();
-    const R = lm.getRightEye();
-    const center = { x: (L[0].x + R[3].x) / 2, y: (L[0].y + R[3].y) / 2 };
-    const eyeDist = R[3].x - L[0].x;
-    const width = eyeDist * 1.8;
-    const height = (loadedAssets[type].height / loadedAssets[type].width) * width;
-    return { x: center.x - width / 2, y: center.y - height / 2, width, height };
-  } else {
-    const scaleMap = { beanie: 2.2, sunhat: 2.4, cap: 1.6 };
-    const jaw = lm.getJawOutline();
-    const browY = Math.min(lm.getLeftEyeBrow()[0].y, lm.getRightEyeBrow()[0].y);
-    const foreH = lm.getLeftEye()[0].y - browY;
-    const headTop = browY - foreH * 1.5;
-    const faceW = jaw[16].x - jaw[0].x;
-    const width = faceW * (scaleMap[type] || 1.6);
-    const height = (loadedAssets[type].height / loadedAssets[type].width) * width;
-    return {
-      x: (jaw[16].x + jaw[0].x) / 2 - width / 2,
-      y: headTop - height * 0.8,
-      width,
-      height
-    };
-  }
-}
-
-/* ========== INTERACT.JS (unchanged) ========== */
-function makeAccessoryInteractive(el) {
-  interact(el)
-    /* ─── DRAG ─── */
-    .draggable({
-      ignoreFrom: '.resize-handle, .rotate-handle',   // drag anywhere EXCEPT the handles
-      listeners: {
-        move(ev) { updatePosition(ev.target, ev.dx, ev.dy); }
+      /* ========= NEW: adaptive thresholds for face detection ========= */
+      const THRESHOLDS = [0.6, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05];
+      async function detectFacesAdaptive (img) {
+        for (const th of THRESHOLDS) {
+          statusText.textContent = `Scanning (threshold ${th})…`;
+          const dets = await faceapi
+            .detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: th }))
+            .withFaceLandmarks(true);
+          if (dets.length) return dets;
+        }
+        return [];   // none found at any threshold
       }
-    })
 
-    /* ─── RESIZE ─── */
-    .resizable({
-      edges: {
-        top:    '.resize-handle.tl, .resize-handle.tr',
-        bottom: '.resize-handle.bl, .resize-handle.br',
-        left:   '.resize-handle.tl, .resize-handle.bl',
-        right:  '.resize-handle.tr, .resize-handle.br'
-      },
-      modifiers: [
-        interact.modifiers.aspectRatio({ ratio: 'preserve' }),
-        interact.modifiers.restrictEdges({ outer: 'parent' })
-      ],
-      listeners: {
-        move(ev) {
-          const t = ev.target;
-          const x = parseFloat(t.dataset.x) + dom2img(ev.deltaRect.left);
-          const y = parseFloat(t.dataset.y) + dom2img(ev.deltaRect.top);
-          const newW = dom2img(ev.rect.width);
-          const scale = newW / parseFloat(t.dataset.w);
-          const newH = parseFloat(t.dataset.h) * scale;
-          Object.assign(t.dataset, { x, y, w: newW, h: newH });
-          updateElementStyle(t);
+      /* ========== COLOUR CONSTANTS ========== */
+      const PEACH_BORDER_COLORS = ['#67767e', '#9bf9e4', '#9bf9e4', '#f1809c', '#f2aee1'];
+
+      const PEACH_BORDER_COLORS_DIM = [
+        '#4f585e', // dimmed from #67767e
+        '#78c7b5', // dimmed from #9bf9e4
+        '#78c7b5', // same as above
+        '#c0657e', // dimmed from #f1809c
+        '#c28bb4'  // dimmed from #f2aee1
+      ];
+
+
+      /* Draws a multi-tone border that never covers the photo itself */
+      function drawPeachBorder(ctx, x, y, w, h, thickness = 14) {
+        ctx.save();
+        ctx.lineWidth = thickness;
+        const steps = PEACH_BORDER_COLORS.length - 1;
+
+        // ---- Top ----
+        let gTop = ctx.createLinearGradient(x, 0, x + w, 0);
+        PEACH_BORDER_COLORS.forEach((c, i) => gTop.addColorStop(i / steps, c));
+        ctx.strokeStyle = gTop;
+        ctx.beginPath();
+        ctx.moveTo(x, y + thickness / 2);
+        ctx.lineTo(x + w, y + thickness / 2);
+        ctx.stroke();
+
+        // ---- Right ----
+        let gRight = ctx.createLinearGradient(0, y, 0, y + h);
+        PEACH_BORDER_COLORS.forEach((c, i) => gRight.addColorStop(i / steps, c));
+        ctx.strokeStyle = gRight;
+        ctx.beginPath();
+        ctx.moveTo(x + w - thickness / 2, y);
+        ctx.lineTo(x + w - thickness / 2, y + h);
+        ctx.stroke();
+
+        // ---- Bottom ----
+        let gBot = ctx.createLinearGradient(x + w, 0, x, 0);
+        PEACH_BORDER_COLORS.forEach((c, i) => gBot.addColorStop(i / steps, c));
+        ctx.strokeStyle = gBot;
+        ctx.beginPath();
+        ctx.moveTo(x + w, y + h - thickness / 2);
+        ctx.lineTo(x, y + h - thickness / 2);
+        ctx.stroke();
+
+        // ---- Left ----
+        let gLeft = ctx.createLinearGradient(0, y + h, 0, y);
+        PEACH_BORDER_COLORS.forEach((c, i) => gLeft.addColorStop(i / steps, c));
+        ctx.strokeStyle = gLeft;
+        ctx.beginPath();
+        ctx.moveTo(x + thickness / 2, y + h);
+        ctx.lineTo(x + thickness / 2, y);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      /* ========== ASSET PRELOAD ========== */
+      function preloadImage (url) {
+        return new Promise((res, rej) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            loadedAssets[
+              Object.keys(ASSET_PATHS).find(k => ASSET_PATHS[k] === url)
+            ] = img;
+            res();
+          };
+          img.onerror = rej;
+          img.src = url;
+        });
+      }
+
+      /* ========== UI WIRING ========== */
+      uploadInput.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            originalImage = img;
+            handleReset();
+            applyBtn.disabled = false;
+            statusText.textContent = 'Image loaded! Click "Apply" or add items.';
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      applyBtn.addEventListener('click', applyEffects);
+      downloadBtn.addEventListener('click', downloadImage);
+      resetBtn.addEventListener('click', handleReset);
+      addHatBtn.addEventListener('click', () => addAccessoryManually('hat'));
+      addGlassesBtn.addEventListener('click', () => addAccessoryManually('glasses'));
+      window.addEventListener('resize', updateAccessoryPositions);
+
+      setupOptionPicker(hatOptions);
+      setupOptionPicker(glassesOptions);
+
+      imageDisplay.addEventListener('click', e => {
+        if (e.target.id === 'image-display' || e.target.id === 'canvas') {
+          selectAccessory(null);
+        }
+      });
+
+      /* ---- option-picker helper ---- */
+      function setupOptionPicker (container) {
+        container.addEventListener('click', e => {
+          const target = e.target.closest('.option-icon');
+          if (!target) return;
+          container
+            .querySelectorAll('.option-icon')
+            .forEach(i => i.classList.remove('selected'));
+          target.classList.add('selected');
+        });
+      }
+
+      /* ========== APPLY AI / FILTER (now adaptive) ========== */
+      async function applyEffects () {
+        if (!originalImage) return;
+        applyBtn.disabled = true;
+        clearAccessories();
+        statusText.textContent = 'Detecting face…';
+
+        displayImage(originalImage, peachFilter.checked);
+
+        const detections = await detectFacesAdaptive(originalImage);
+
+        if (!detections.length) {
+          statusText.textContent =
+            'No face detected at any sensitivity. Add items manually with "+".';
+        } else {
+          statusText.textContent = 'Face found! Placing accessories…';
+          const resized = faceapi.resizeResults(detections, {
+            width: canvas.width,
+            height: canvas.height
+          });
+          const hatSel =
+            hatOptions.querySelector('.selected').dataset.value;
+          const glassSel =
+            glassesOptions.querySelector('.selected').dataset.value;
+          if (hatSel !== 'none') addAccessory(hatSel, { landmarks: resized[0].landmarks });
+          if (glassSel !== 'none') addAccessory(glassSel, { landmarks: resized[0].landmarks });
+        }
+        applyBtn.disabled = false;
+        showActionButtons();
+      }
+
+      /* ========== CANVAS HELPERS ========== */
+      function displayImage (img, applyFilter = false) {
+        const ctx = canvas.getContext('2d');
+        const containerW = imageDisplay.clientWidth || 600;
+        coordinateScale = img.width / containerW;
+        canvas.width = containerW;
+        canvas.height = img.height / coordinateScale;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        if (applyFilter) applyPeachFilter(ctx, canvas.width, canvas.height, false);
+      }
+
+      function showActionButtons () {
+        downloadBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'inline-block';
+      }
+
+      /* ========== ACCESSORY MANAGEMENT ========== */
+      function addAccessoryManually (category) {
+        if (!originalImage) {
+          statusText.textContent = 'Please upload an image first!';
+          return;
+        }
+        const container = category === 'hat' ? hatOptions : glassesOptions;
+        const val = container.querySelector('.selected').dataset.value;
+        if (val !== 'none') {
+          addAccessory(val);
+          showActionButtons();
         }
       }
-    })
 
-    /* ─── TAP-TO-SELECT ─── */
-    .on('tap', e => {
-      selectAccessory(e.currentTarget);
-      e.preventDefault();
-      e.stopPropagation();
-    });
-}
+      function addAccessory (type, { landmarks } = {}) {
+        const el = document.createElement('div');
+        el.className = 'accessory';
+        el.innerHTML = `
+          <img src="${ASSET_PATHS[type]}" style="width:100%;height:100%;pointer-events:none;user-select:none;">
+          <div class="rotate-handle" style="display:none"></div>
+          <div class="resize-handle tl" style="display:none"></div>
+          <div class="resize-handle tr" style="display:none"></div>
+          <div class="resize-handle bl" style="display:none"></div>
+          <div class="resize-handle br" style="display:none"></div>
+        `;
 
-/* ---- rotate handle ---- */
-interact('.rotate-handle').draggable({
-  listeners: {
-    move (ev) {
-      const acc = ev.target.parentNode;
-      const rect = acc.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const angleDeg = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
-      acc.dataset.rot = angleDeg - 90;
-      updateElementStyle(acc);
-    }
-  },
-  inertia: true
-});
+        const imgAsset = loadedAssets[type];
+        let x, y, w, h;
 
-/* ---- helpers used by interact ---- */
-function updatePosition (t, dx, dy) {
-  const x = parseFloat(t.dataset.x) + dom2img(dx);
-  const y = parseFloat(t.dataset.y) + dom2img(dy);
-  Object.assign(t.dataset, { x, y });
-  updateElementStyle(t);
-}
+        if (landmarks) {
+          ({ x, y, width: w, height: h } = calculatePlacement(type, landmarks));
+          x = dom2img(x);
+          y = dom2img(y);
+          w = dom2img(w);
+          h = dom2img(h);
+        } else {
+          w = originalImage.width / 4;
+          h = (imgAsset.height / imgAsset.width) * w;
+          x = (originalImage.width - w) / 2;
+          y = (originalImage.height - h) / 2;
+        }
 
-function updateElementStyle (el) {
-  const { x, y, w, h, rot } = el.dataset;
-  Object.assign(el.style, {
-    left: `${img2dom(+x)}px`,
-    top:  `${img2dom(+y)}px`,
-    width:  `${img2dom(+w)}px`,
-    height: `${img2dom(+h)}px`,
-    transform: `rotate(${rot || 0}deg)`
-  });
-}
+        Object.assign(el.dataset, { x, y, w, h, rot: 0, asset: type });
+        updateElementStyle(el);
+        imageDisplay.appendChild(el);
+        makeAccessoryInteractive(el);
+        selectAccessory(el); // new accessory becomes selected
+      }
 
-/* ---- selection toggle ---- */
-function selectAccessory (el) {
-  if (selectedAccessory) {
-    selectedAccessory.classList.remove('selected');
-    selectedAccessory.style.zIndex = 1;
-    selectedAccessory
-      .querySelectorAll('.resize-handle, .rotate-handle')
-      .forEach(h => (h.style.display = 'none'));
-  }
-  selectedAccessory = el;
-  if (el) {
-    el.classList.add('selected');
-    el.style.zIndex = 10;
-    el
-      .querySelectorAll('.resize-handle, .rotate-handle')
-      .forEach(h => (h.style.display = ''));
-  }
-}
+      /* ---- placement maths ---- */
+      function calculatePlacement (type, lm) {
+        if (type === 'sunglasses') {
+          const L = lm.getLeftEye();
+          const R = lm.getRightEye();
+          const center = { x: (L[0].x + R[3].x) / 2, y: (L[0].y + R[3].y) / 2 };
+          const eyeDist = R[3].x - L[0].x;
+          const width = eyeDist * 1.8;
+          const height = (loadedAssets[type].height / loadedAssets[type].width) * width;
+          return { x: center.x - width / 2, y: center.y - height / 2, width, height };
+        } else {
+          const scaleMap = { beanie: 2.2, sunhat: 2.4, cap: 1.6 };
+          const jaw = lm.getJawOutline();
+          const browY = Math.min(lm.getLeftEyeBrow()[0].y, lm.getRightEyeBrow()[0].y);
+          const foreH = lm.getLeftEye()[0].y - browY;
+          const headTop = browY - foreH * 1.5;
+          const faceW = jaw[16].x - jaw[0].x;
+          const width = faceW * (scaleMap[type] || 1.6);
+          const height = (loadedAssets[type].height / loadedAssets[type].width) * width;
+          return {
+            x: (jaw[16].x + jaw[0].x) / 2 - width / 2,
+            y: headTop - height * 0.8,
+            width,
+            height
+          };
+        }
+      }
 
-/* ---- misc helpers ---- */
-function clearAccessories () {
-  imageDisplay.querySelectorAll('.accessory').forEach(n => n.remove());
-  selectAccessory(null);
-}
+      /* ========== INTERACT.JS (unchanged) ========== */
+      function makeAccessoryInteractive(el) {
+        interact(el)
+          /* ─── DRAG ─── */
+          .draggable({
+            ignoreFrom: '.resize-handle, .rotate-handle',   // drag anywhere EXCEPT the handles
+            listeners: {
+              move(ev) { updatePosition(ev.target, ev.dx, ev.dy); }
+            }
+          })
 
-function updateAccessoryPositions () {
-  if (!originalImage) return;
-  coordinateScale = originalImage.width / canvas.clientWidth;
-  imageDisplay.querySelectorAll('.accessory').forEach(updateElementStyle);
-}
+          /* ─── RESIZE ─── */
+          .resizable({
+            edges: {
+              top:    '.resize-handle.tl, .resize-handle.tr',
+              bottom: '.resize-handle.bl, .resize-handle.br',
+              left:   '.resize-handle.tl, .resize-handle.bl',
+              right:  '.resize-handle.tr, .resize-handle.br'
+            },
+            modifiers: [
+              interact.modifiers.aspectRatio({ ratio: 'preserve' }),
+              interact.modifiers.restrictEdges({ outer: 'parent' })
+            ],
+            listeners: {
+              move(ev) {
+                const t = ev.target;
+                const x = parseFloat(t.dataset.x) + dom2img(ev.deltaRect.left);
+                const y = parseFloat(t.dataset.y) + dom2img(ev.deltaRect.top);
+                const newW = dom2img(ev.rect.width);
+                const scale = newW / parseFloat(t.dataset.w);
+                const newH = parseFloat(t.dataset.h) * scale;
+                Object.assign(t.dataset, { x, y, w: newW, h: newH });
+                updateElementStyle(t);
+              }
+            }
+          })
 
-/* ========== PEACH FILTER ========== */
-function applyPeachFilter(ctx, w, h, forDownload = false) {
-  /* ---- subtle colour wash ---- */
-  ctx.save();
-  ctx.globalCompositeOperation = 'soft-light';
-  ctx.fillStyle = 'rgba(255,105,180,0.60)'; // warm pink
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = 'rgba(147,112,219,0.55)'; // gentle violet
-  ctx.fillRect(0, 0, w, h);
-  ctx.restore();
+          /* ─── TAP-TO-SELECT ─── */
+          .on('tap', e => {
+            selectAccessory(e.currentTarget);
+            e.preventDefault();
+            e.stopPropagation();
+          });
+      }
 
-  /* ---- multi-tone border ---- */
-  const thickness = forDownload
-    ? Math.max(24, Math.floor(Math.min(w, h) * 0.025))
-    : Math.max(10, Math.floor(Math.min(w, h) * 0.02));
-  drawPeachBorder(ctx, 0, 0, w, h, thickness);
-}
+      /* ---- rotate handle ---- */
+      interact('.rotate-handle').draggable({
+        listeners: {
+          move (ev) {
+            const acc = ev.target.parentNode;
+            const rect = acc.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const angleDeg = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+            acc.dataset.rot = angleDeg - 90;
+            updateElementStyle(acc);
+          }
+        },
+        inertia: true
+      });
 
-/* ========== RESET / DOWNLOAD ========== */
-function handleReset () {
-  if (!originalImage) return;
-  clearAccessories();
-  peachFilter.checked = false;
-  displayImage(originalImage);
-  downloadBtn.style.display = 'none';
-  resetBtn.style.display = 'none';
-  statusText.textContent = 'State reset. Ready for new edits!';
-}
+      /* ---- helpers used by interact ---- */
+      function updatePosition (t, dx, dy) {
+        const x = parseFloat(t.dataset.x) + dom2img(dx);
+        const y = parseFloat(t.dataset.y) + dom2img(dy);
+        Object.assign(t.dataset, { x, y });
+        updateElementStyle(t);
+      }
 
-function downloadImage() {
-  const includeOutside = document.getElementById('include-outside').checked;
+      function updateElementStyle (el) {
+        const { x, y, w, h, rot } = el.dataset;
+        Object.assign(el.style, {
+          left: `${img2dom(+x)}px`,
+          top:  `${img2dom(+y)}px`,
+          width:  `${img2dom(+w)}px`,
+          height: `${img2dom(+h)}px`,
+          transform: `rotate(${rot || 0}deg)`
+        });
+      }
 
-  /* ── 1.  Measure overhang ── */
-  let leftExtra = 0, rightExtra = 0, topExtra = 0, bottomExtra = 0;
-  if (includeOutside) {
-    imageDisplay.querySelectorAll('.accessory').forEach(el => {
-      const { x, y, w, h } = el.dataset;
-      leftExtra   = Math.max(leftExtra  , Math.max(0, -x));
-      topExtra    = Math.max(topExtra   , Math.max(0, -y));
-      rightExtra  = Math.max(rightExtra , Math.max(0, (+x + +w) - originalImage.width));
-      bottomExtra = Math.max(bottomExtra, Math.max(0, (+y + +h) - originalImage.height));
-    });
-  }
+      /* ---- selection toggle ---- */
+      function selectAccessory (el) {
+        if (selectedAccessory) {
+          selectedAccessory.classList.remove('selected');
+          selectedAccessory.style.zIndex = 1;
+          selectedAccessory
+            .querySelectorAll('.resize-handle, .rotate-handle')
+            .forEach(h => (h.style.display = 'none'));
+        }
+        selectedAccessory = el;
+        if (el) {
+          el.classList.add('selected');
+          el.style.zIndex = 10;
+          el
+            .querySelectorAll('.resize-handle, .rotate-handle')
+            .forEach(h => (h.style.display = ''));
+        }
+      }
 
-  /* ── 2.  Symmetric padding ── */
-  const pad = Math.max(leftExtra, rightExtra, topExtra, bottomExtra);
+      /* ---- misc helpers ---- */
+      function clearAccessories () {
+        imageDisplay.querySelectorAll('.accessory').forEach(n => n.remove());
+        selectAccessory(null);
+      }
 
-  /* ── 3.  Prep final canvas ── */
-  const fin = document.createElement('canvas');
-  fin.width  = originalImage.width  + pad * 2;
-  fin.height = originalImage.height + pad * 2;
-  const ctx = fin.getContext('2d');
+      function updateAccessoryPositions () {
+        if (!originalImage) return;
+        coordinateScale = originalImage.width / canvas.clientWidth;
+        imageDisplay.querySelectorAll('.accessory').forEach(updateElementStyle);
+      }
 
-  /* ── 4.  Fill whitespace with a diagonal peach gradient ── */
-  const bgGrad = ctx.createLinearGradient(0, 0, fin.width, fin.height);
-  const steps  = PEACH_BORDER_COLORS.length - 1;
-  PEACH_BORDER_COLORS.forEach((c, i) => bgGrad.addColorStop(i / steps, c));
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, fin.width, fin.height);
+      /* ========== PEACH FILTER ========== */
+      function applyPeachFilter(ctx, w, h, forDownload = false) {
+        /* ---- subtle colour wash ---- */
+        ctx.save();
+        ctx.globalCompositeOperation = 'soft-light';
+        ctx.fillStyle = 'rgba(255,105,180,0.60)'; // warm pink
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(147,112,219,0.55)'; // gentle violet
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
 
-  /* ── 5.  Draw original image ── */
-  ctx.drawImage(originalImage, pad, pad);
+        /* ---- multi-tone border ---- */
+        const thickness = forDownload
+          ? Math.max(24, Math.floor(Math.min(w, h) * 0.025))
+          : Math.max(10, Math.floor(Math.min(w, h) * 0.02));
+        drawPeachBorder(ctx, 0, 0, w, h, thickness);
+      }
 
-  /* ── 6.  Optional tint + always-on border ── */
-  if (peachFilter.checked) {
-    ctx.save();
-    ctx.translate(pad, pad);
-    ctx.beginPath();
-    ctx.rect(0, 0, originalImage.width, originalImage.height);
-    ctx.clip();                               // tint only the photo area
-    applyPeachFilter(ctx, originalImage.width, originalImage.height, true);
-    ctx.restore();
-  } else {
-    const t = Math.max(24, Math.floor(Math.min(originalImage.width, originalImage.height) * 0.025));
-    drawPeachBorder(ctx, pad, pad, originalImage.width, originalImage.height, t);
-  }
+      /* ========== RESET / DOWNLOAD ========== */
+      function handleReset () {
+        if (!originalImage) return;
+        clearAccessories();
+        peachFilter.checked = false;
+        displayImage(originalImage);
+        downloadBtn.style.display = 'none';
+        resetBtn.style.display = 'none';
+        statusText.textContent = 'State reset. Ready for new edits!';
+      }
 
-  /* ── 7.  Draw accessories ── */
-  imageDisplay.querySelectorAll('.accessory').forEach(el => {
-    const img = loadedAssets[el.dataset.asset];
-    if (!img) return;
-    const { x, y, w, h, rot } = el.dataset;
-    ctx.save();
-    ctx.translate(+x + +w / 2 + pad, +y + +h / 2 + pad);
-    ctx.rotate((+rot || 0) * Math.PI / 180);
-    ctx.drawImage(img, -w / 2, -h / 2, +w, +h);
-    ctx.restore();
-  });
+      function downloadImage() {
+        const includeOutside = document.getElementById('include-outside').checked;
 
-  /* ── 8.  Download ── */
-  const link = document.createElement('a');
-  link.download = 'peach-perfect.png';
-  link.href = fin.toDataURL('image/png');
-  link.click();
-}
-</script>
+        /* ── 1.  Measure overhang ── */
+        let leftExtra = 0, rightExtra = 0, topExtra = 0, bottomExtra = 0;
+        if (includeOutside) {
+          imageDisplay.querySelectorAll('.accessory').forEach(el => {
+            const { x, y, w, h } = el.dataset;
+            leftExtra   = Math.max(leftExtra  , Math.max(0, -x));
+            topExtra    = Math.max(topExtra   , Math.max(0, -y));
+            rightExtra  = Math.max(rightExtra , Math.max(0, (+x + +w) - originalImage.width));
+            bottomExtra = Math.max(bottomExtra, Math.max(0, (+y + +h) - originalImage.height));
+          });
+        }
 
+        /* ── 2.  Symmetric padding ── */
+        const pad = Math.max(leftExtra, rightExtra, topExtra, bottomExtra);
 
-</body>
+        /* ── 3.  Prep final canvas ── */
+        const fin = document.createElement('canvas');
+        fin.width  = originalImage.width  + pad * 2;
+        fin.height = originalImage.height + pad * 2;
+        const ctx = fin.getContext('2d');
+
+        /* ── 4.  Fill whitespace with a diagonal peach gradient ── */
+        const bgGrad = ctx.createLinearGradient(0, 0, fin.width, fin.height);
+        const steps  = PEACH_BORDER_COLORS_DIM.length - 1;
+        PEACH_BORDER_COLORS_DIM.forEach((c, i) => bgGrad.addColorStop(i / steps, c));
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, fin.width, fin.height);
+
+        /* ── 5.  Draw original image ── */
+        ctx.drawImage(originalImage, pad, pad);
+
+        /* ── 6.  Optional tint + always-on border ── */
+        if (peachFilter.checked) {
+          ctx.save();
+          ctx.translate(pad, pad);
+          ctx.beginPath();
+          ctx.rect(0, 0, originalImage.width, originalImage.height);
+          ctx.clip();                               // tint only the photo area
+          applyPeachFilter(ctx, originalImage.width, originalImage.height, true);
+          ctx.restore();
+        } else {
+          const t = Math.max(24, Math.floor(Math.min(originalImage.width, originalImage.height) * 0.025));
+          drawPeachBorder(ctx, pad, pad, originalImage.width, originalImage.height, t);
+        }
+
+        /* ── 7.  Draw accessories ── */
+        imageDisplay.querySelectorAll('.accessory').forEach(el => {
+          const img = loadedAssets[el.dataset.asset];
+          if (!img) return;
+          const { x, y, w, h, rot } = el.dataset;
+          ctx.save();
+          ctx.translate(+x + +w / 2 + pad, +y + +h / 2 + pad);
+          ctx.rotate((+rot || 0) * Math.PI / 180);
+          ctx.drawImage(img, -w / 2, -h / 2, +w, +h);
+          ctx.restore();
+        });
+
+        /* ── 8.  Download ── */
+        const link = document.createElement('a');
+        link.download = 'peach-perfect.png';
+        link.href = fin.toDataURL('image/png');
+        link.click();
+      }
+    </script>
+  </body>
 </html>
