@@ -294,8 +294,10 @@
           <div class="icon-options" id="hat-options">
             <div class="option-icon none-icon selected" data-value="none">ø</div>
             <div class="option-icon" data-value="beanie"><img src="./assets/beanie-nobg.png" alt=""></div>
-            <div class="option-icon" data-value="cap"><img src="./assets/cap-nobg.png" alt=""></div>
             <div class="option-icon" data-value="sunhat"><img src="./assets/sunhat-nobg.png" alt=""></div>
+            <div class="option-icon" data-value="cap"><img src="./assets/cap-nobg.png" alt=""></div>
+            <div class="option-icon" data-value="cap2"><img src="./assets/latina-hat-pink-just-peach-nobg.png" alt=""></div>
+            <div class="option-icon" data-value="cap3"><img src="./assets/latina-hat-pink-nobg.png" alt=""></div>
           </div>
         </div>
 
@@ -362,6 +364,8 @@
       const ASSET_PATHS = {
         beanie     : './assets/beanie-nobg.png',
         cap        : './assets/cap-nobg.png',
+        cap2        : './assets/latina-hat-pink-just-peach-nobg.png',
+        cap3        : './assets/latina-hat-pink-nobg.png',
         sunhat     : './assets/sunhat-nobg.png',
         sunglasses : './assets/sunglasses-nobg.png',
         peach      : './assets/peach.png'
@@ -626,7 +630,7 @@
           const height = (loadedAssets[type].height / loadedAssets[type].width) * width;
           return { x: center.x - width / 2, y: center.y - height / 2, width, height };
         } else {
-          const scaleMap = { beanie: 2.2, sunhat: 2.4, cap: 1.6 };
+          const scaleMap = { beanie: 2.2, sunhat: 2.4, cap: 1.6, cap2: 1.6, cap3: 1.6 };
           const jaw = lm.getJawOutline();
           const browY = Math.min(lm.getLeftEyeBrow()[0].y, lm.getRightEyeBrow()[0].y);
           const foreH = lm.getLeftEye()[0].y - browY;
