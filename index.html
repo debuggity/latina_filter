@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
   <!-- face-api.js -->
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  
+
   <!-- cute font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,21 +65,41 @@
     .accessory:active{cursor:grabbing;}
     .accessory.selected{border:2px dashed var(--ink);z-index:10;}
 
-    /* rotate knob */
-    .rotate-handle{
-      position:absolute;left:50%;bottom:-32px;transform:translateX(-50%);
-      width:26px;height:26px;border:2px solid var(--ink);border-radius:50%;background:#fff;
+    /* --- Accessory Handles --- */
+    .accessory-handle{
+      position:absolute;width:26px;height:26px;border:2px solid var(--ink);
+      border-radius:50%;background:#fff;
       display:none;align-items:center;justify-content:center;
+      font-size: 15px; color: var(--ink);
+    }
+    .accessory.selected .accessory-handle{display:flex}
+
+    .rotate-handle{
+      left:50%;bottom:-32px;transform:translateX(-50%);
       cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' stroke='%236d4c41' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M4.93 4.93a10 10 0 1 1-1.36 11.32'/><polyline points='4 4 4 10 10 10'/></svg>") 16 16,pointer;
     }
-    .rotate-handle::before{content:"↻";font-size:15px;color:var(--ink);}
-    .accessory.selected .rotate-handle{display:flex}
+    .rotate-handle::before{content:"↻";}
+
+    .flip-handle {
+      right:-32px; top: 50%; transform: translateY(-50%);
+      cursor: pointer;
+      /* NEW: SVG background for flip icon */
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' stroke='%236d4c41' fill='none'><path d='M3 12h18M3 12l5-5M3 12l5 5M21 12l-5-5M21 12l-5 5' /></svg>");
+      background-size: 18px;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    /* UPDATED: Removed emoji content */
+    .flip-handle::before{content:"";}
+
 
     /* corner resize handles */
     .resize-handle {
       position: absolute;width: 14px;height: 14px;background: #fff;border: 2px solid var(--ink);
       border-radius: 3px;z-index: 11;pointer-events: all;
+      display: none;
     }
+    .accessory.selected .resize-handle{display: block;}
     .resize-handle.tl{top:-7px;left:-7px;cursor:nwse-resize;}
     .resize-handle.tr{top:-7px;right:-7px;cursor:nesw-resize;}
     .resize-handle.bl{bottom:-7px;left:-7px;cursor:nesw-resize;}
@@ -116,13 +136,37 @@
     }
     #applyBtn{background:var(--peach-dark);color:var(--white);border-color:var(--ink);flex-grow:1;font-size:24px;padding:12px 20px;}
     #applyBtn:disabled{background:var(--shadow);color:#9e9e9e;cursor:not-allowed;transform:none;box-shadow:2px 2px 0 var(--shadow);}
-    #resetBtn{background-color:var(--danger);color:white;border-color:var(--danger-dark);}
+    /* UPDATED: Added styles for new Delete button */
+    #deleteBtn, #resetBtn{background-color:var(--danger);color:white;border-color:var(--danger-dark);}
     #resetBtn:hover{background-color:#f48a8a;}
+    #deleteBtn:hover{background-color:#f48a8a;}
+
 
     /* ─── Status & Filter ─── */
-    #status{margin-top:15px;color:var(--peach-dark);font-size:18px;height:20px;font-weight:700;}
-    .filter-option{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:18px;}
+    /* UPDATED: Hidden status text */
+    #status{margin-top:15px;color:var(--peach-dark);font-size:18px;height:20px;font-weight:700;display: none;}
+    .filter-option-container{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:18px;user-select:none;}
     input[type="checkbox"]{accent-color:var(--peach-dark);width:18px;height:18px;}
+
+    /* --- NEW: Stylized Switch --- */
+    .peach-switch{
+      width: 50px; height: 28px; background-color: var(--shadow);
+      border-radius: 14px; position: relative;
+      border: 2px solid var(--ink);
+      cursor: pointer; transition: background-color .3s ease;
+    }
+    .peach-switch::after{
+      content:''; position: absolute;
+      top: 2px; left: 2px;
+      width: 20px; height: 20px;
+      background-color: var(--white);
+      border-radius: 50%;
+      box-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+      transition: transform .3s ease;
+    }
+    .peach-switch.active{ background-color: var(--peach-dark); }
+    .peach-switch.active::after{ transform: translateX(22px); }
+
 
     @media (max-width:640px){
       body{padding:20px 10px;gap:15px;}
@@ -311,7 +355,11 @@
             <div class="option-icon" data-value="sunglasses"><img src="./assets/sunglasses-nobg.png" alt=""></div>
           </div>
           <hr style="border:none;border-top:2px dotted var(--peach);margin:15px 0;">
-          <label class="filter-option"><input type="checkbox" id="peach-filter"> Peach Filter</label>
+          <!-- Stylized Switch -->
+          <div class="filter-option-container" id="peach-filter-container">
+              <span>Peach Filter</span>
+              <div class="peach-switch" id="peach-filter-switch"></div>
+          </div>
         </div>
       </div>
       
@@ -325,12 +373,17 @@
         <canvas id="canvas"></canvas>
       </div>
 
-      <div class="controls">
-        <label class="filter-option" style="margin-top:10px;">
-          <input type="checkbox" id="include-outside"> Include off-canvas props
+      <!-- UPDATED: Re-ordered controls and added Delete button -->
+      <div class="controls" style="flex-direction: column; gap: 15px; margin-top: 10px;">
+        <label class="filter-option-container">
+          <input type="checkbox" id="include-outside" checked> Include off-canvas props
         </label>
-        <button id="downloadBtn" style="display:none;">Download</button>
-        <button id="resetBtn" style="display:none;">Reset</button>
+
+        <div class="controls" style="margin-top:0;">
+          <button id="deleteBtn" style="display:none;">Delete</button>
+          <button id="downloadBtn" style="display:none;">Download</button>
+          <button id="resetBtn" style="display:none;">Reset</button>
+        </div>
       </div>
 
     </div>
@@ -347,25 +400,26 @@
       const img2dom = v => v / coordinateScale;
 
       /* ---- DOM refs ---- */
-      const uploadInput   = document.getElementById('upload');
-      const applyBtn      = document.getElementById('applyBtn');
-      const downloadBtn   = document.getElementById('downloadBtn');
-      const resetBtn      = document.getElementById('resetBtn');
-      const canvas        = document.getElementById('canvas');
-      const statusText    = document.getElementById('status');
-      const imageDisplay  = document.getElementById('image-display');
-      const peachFilter   = document.getElementById('peach-filter');
-      const hatOptions    = document.getElementById('hat-options');
-      const glassesOptions= document.getElementById('glasses-options');
-      const addHatBtn     = document.getElementById('add-hat-manual');
-      const addGlassesBtn = document.getElementById('add-glasses-manual');
+      const uploadInput     = document.getElementById('upload');
+      const applyBtn        = document.getElementById('applyBtn');
+      const downloadBtn     = document.getElementById('downloadBtn');
+      const resetBtn        = document.getElementById('resetBtn');
+      const deleteBtn       = document.getElementById('deleteBtn'); // NEW
+      const canvas          = document.getElementById('canvas');
+      const statusText      = document.getElementById('status');
+      const imageDisplay    = document.getElementById('image-display');
+      const peachFilterSwitch = document.getElementById('peach-filter-switch');
+      const hatOptions      = document.getElementById('hat-options');
+      const glassesOptions  = document.getElementById('glasses-options');
+      const addHatBtn       = document.getElementById('add-hat-manual');
+      const addGlassesBtn   = document.getElementById('add-glasses-manual');
 
       /* ---- Assets ---- */
       const ASSET_PATHS = {
         beanie     : './assets/beanie-nobg.png',
         cap        : './assets/cap-nobg.png',
-        cap2        : './assets/latina-hat-pink-just-peach-nobg.png',
-        cap3        : './assets/latina-hat-pink-nobg.png',
+        cap2       : './assets/latina-hat-pink-just-peach-nobg.png',
+        cap3       : './assets/latina-hat-pink-nobg.png',
         sunhat     : './assets/sunhat-nobg.png',
         sunglasses : './assets/sunglasses-nobg.png',
         peach      : './assets/peach.png'
@@ -495,12 +549,18 @@
         };
         reader.readAsDataURL(file);
       });
+
       applyBtn.addEventListener('click', applyEffects);
       downloadBtn.addEventListener('click', downloadImage);
       resetBtn.addEventListener('click', handleReset);
+      deleteBtn.addEventListener('click', deleteSelectedAccessory); // NEW
       addHatBtn.addEventListener('click', () => addAccessoryManually('hat'));
       addGlassesBtn.addEventListener('click', () => addAccessoryManually('glasses'));
       window.addEventListener('resize', updateAccessoryPositions);
+      
+      document.getElementById('peach-filter-container').addEventListener('click', () => {
+          peachFilterSwitch.classList.toggle('active');
+      });
 
       setupOptionPicker(hatOptions);
       setupOptionPicker(glassesOptions);
@@ -530,7 +590,7 @@
         clearAccessories();
         statusText.textContent = 'Detecting face…';
 
-        displayImage(originalImage, peachFilter.checked);
+        displayImage(originalImage, peachFilterSwitch.classList.contains('active'));
 
         const detections = await detectFacesAdaptive(originalImage);
 
@@ -547,8 +607,10 @@
             hatOptions.querySelector('.selected').dataset.value;
           const glassSel =
             glassesOptions.querySelector('.selected').dataset.value;
-          if (hatSel !== 'none') addAccessory(hatSel, { landmarks: resized[0].landmarks });
+
+          // Add glasses first, then hats, to ensure correct layering
           if (glassSel !== 'none') addAccessory(glassSel, { landmarks: resized[0].landmarks });
+          if (hatSel !== 'none') addAccessory(hatSel, { landmarks: resized[0].landmarks });
         }
         applyBtn.disabled = false;
         showActionButtons();
@@ -583,21 +645,35 @@
           showActionButtons();
         }
       }
+      
+      function getAccessoryCategory(type) {
+        return type.includes('glass') ? 'glasses' : 'hat';
+      }
+      
+      // NEW: Function to delete the selected accessory
+      function deleteSelectedAccessory() {
+        if (selectedAccessory) {
+          selectedAccessory.remove();
+          selectAccessory(null); // Deselect and hide delete button
+        }
+      }
 
       function addAccessory (type, { landmarks } = {}) {
         const el = document.createElement('div');
         el.className = 'accessory';
         el.innerHTML = `
           <img src="${ASSET_PATHS[type]}" style="width:100%;height:100%;pointer-events:none;user-select:none;">
-          <div class="rotate-handle" style="display:none"></div>
-          <div class="resize-handle tl" style="display:none"></div>
-          <div class="resize-handle tr" style="display:none"></div>
-          <div class="resize-handle bl" style="display:none"></div>
-          <div class="resize-handle br" style="display:none"></div>
+          <div class="accessory-handle rotate-handle"></div>
+          <div class="accessory-handle flip-handle"></div>
+          <div class="resize-handle tl"></div>
+          <div class="resize-handle tr"></div>
+          <div class="resize-handle bl"></div>
+          <div class="resize-handle br"></div>
         `;
 
         const imgAsset = loadedAssets[type];
         let x, y, w, h;
+        const category = getAccessoryCategory(type);
 
         if (landmarks) {
           ({ x, y, width: w, height: h } = calculatePlacement(type, landmarks));
@@ -612,7 +688,11 @@
           y = (originalImage.height - h) / 2;
         }
 
-        Object.assign(el.dataset, { x, y, w, h, rot: 0, asset: type });
+        Object.assign(el.dataset, { x, y, w, h, rot: 0, asset: type, flipped: 'false', category });
+        
+        // Set z-index based on category for layering
+        el.style.zIndex = category === 'hat' ? 3 : 2;
+
         updateElementStyle(el);
         imageDisplay.appendChild(el);
         makeAccessoryInteractive(el);
@@ -647,12 +727,12 @@
         }
       }
 
-      /* ========== INTERACT.JS (unchanged) ========== */
+      /* ========== INTERACT.JS ========== */
       function makeAccessoryInteractive(el) {
         interact(el)
           /* ─── DRAG ─── */
           .draggable({
-            ignoreFrom: '.resize-handle, .rotate-handle',   // drag anywhere EXCEPT the handles
+            ignoreFrom: '.resize-handle, .rotate-handle, .flip-handle',
             listeners: {
               move(ev) { updatePosition(ev.target, ev.dx, ev.dy); }
             }
@@ -667,8 +747,7 @@
               right:  '.resize-handle.tr, .resize-handle.br'
             },
             modifiers: [
-              interact.modifiers.aspectRatio({ ratio: 'preserve' }),
-              interact.modifiers.restrictEdges({ outer: 'parent' })
+              interact.modifiers.aspectRatio({ ratio: 'preserve' })
             ],
             listeners: {
               move(ev) {
@@ -690,6 +769,15 @@
             e.preventDefault();
             e.stopPropagation();
           });
+        
+        // Flip Handle Listener
+        const flipHandle = el.querySelector('.flip-handle');
+        flipHandle.addEventListener('click', (e) => {
+            const isFlipped = el.dataset.flipped === 'true';
+            el.dataset.flipped = !isFlipped;
+            updateElementStyle(el);
+            e.stopPropagation();
+        });
       }
 
       /* ---- rotate handle ---- */
@@ -716,8 +804,17 @@
         updateElementStyle(t);
       }
 
+      // UPDATED: Flip transform is now applied to inner image to fix resize bug
       function updateElementStyle (el) {
-        const { x, y, w, h, rot } = el.dataset;
+        const { x, y, w, h, rot, flipped } = el.dataset;
+        const img = el.querySelector('img');
+
+        // Apply flip to the image, not the container, to prevent interaction bugs
+        if (img) {
+          img.style.transform = flipped === 'true' ? 'scaleX(-1)' : '';
+        }
+        
+        // Apply position, size, and rotation to the main container
         Object.assign(el.style, {
           left: `${img2dom(+x)}px`,
           top:  `${img2dom(+y)}px`,
@@ -726,23 +823,24 @@
           transform: `rotate(${rot || 0}deg)`
         });
       }
-
-      /* ---- selection toggle ---- */
+      
+      // UPDATED: Now also shows/hides the delete button
       function selectAccessory (el) {
-        if (selectedAccessory) {
+        if (selectedAccessory && selectedAccessory !== el) {
           selectedAccessory.classList.remove('selected');
-          selectedAccessory.style.zIndex = 1;
-          selectedAccessory
-            .querySelectorAll('.resize-handle, .rotate-handle')
-            .forEach(h => (h.style.display = 'none'));
+          // Return to base z-index
+          const category = selectedAccessory.dataset.category;
+          selectedAccessory.style.zIndex = category === 'hat' ? 3 : 2;
         }
+        
         selectedAccessory = el;
+
         if (el) {
           el.classList.add('selected');
-          el.style.zIndex = 10;
-          el
-            .querySelectorAll('.resize-handle, .rotate-handle')
-            .forEach(h => (h.style.display = ''));
+          el.style.zIndex = 10; // Bring selected to the very front
+          deleteBtn.style.display = 'inline-block'; // Show delete button
+        } else {
+          deleteBtn.style.display = 'none'; // Hide delete button
         }
       }
 
@@ -780,10 +878,11 @@
       function handleReset () {
         if (!originalImage) return;
         clearAccessories();
-        peachFilter.checked = false;
+        peachFilterSwitch.classList.remove('active');
         displayImage(originalImage);
         downloadBtn.style.display = 'none';
         resetBtn.style.display = 'none';
+        deleteBtn.style.display = 'none'; // NEW: hide on reset
         statusText.textContent = 'State reset. Ready for new edits!';
       }
 
@@ -822,12 +921,12 @@
         ctx.drawImage(originalImage, pad, pad);
 
         /* ── 6.  Optional tint + always-on border ── */
-        if (peachFilter.checked) {
+        if (peachFilterSwitch.classList.contains('active')) {
           ctx.save();
           ctx.translate(pad, pad);
           ctx.beginPath();
           ctx.rect(0, 0, originalImage.width, originalImage.height);
-          ctx.clip();                               // tint only the photo area
+          ctx.clip(); // tint only the photo area
           applyPeachFilter(ctx, originalImage.width, originalImage.height, true);
           ctx.restore();
         } else {
@@ -835,14 +934,28 @@
           drawPeachBorder(ctx, pad, pad, originalImage.width, originalImage.height, t);
         }
 
-        /* ── 7.  Draw accessories ── */
-        imageDisplay.querySelectorAll('.accessory').forEach(el => {
+        /* ── 7.  Draw accessories (sorted for layering) ── */
+        const accessories = Array.from(imageDisplay.querySelectorAll('.accessory'));
+        accessories.sort((a, b) => {
+            const zA = a.dataset.category === 'hat' ? 3 : 2;
+            const zB = b.dataset.category === 'hat' ? 3 : 2;
+            return zA - zB;
+        });
+        
+        accessories.forEach(el => {
           const img = loadedAssets[el.dataset.asset];
           if (!img) return;
-          const { x, y, w, h, rot } = el.dataset;
+          const { x, y, w, h, rot, flipped } = el.dataset;
           ctx.save();
-          ctx.translate(+x + +w / 2 + pad, +y + +h / 2 + pad);
+          
+          const centerX = +x + (+w / 2) + pad;
+          const centerY = +y + (+h / 2) + pad;
+          
+          ctx.translate(centerX, centerY);
           ctx.rotate((+rot || 0) * Math.PI / 180);
+          if (flipped === 'true') {
+            ctx.scale(-1, 1);
+          }
           ctx.drawImage(img, -w / 2, -h / 2, +w, +h);
           ctx.restore();
         });
